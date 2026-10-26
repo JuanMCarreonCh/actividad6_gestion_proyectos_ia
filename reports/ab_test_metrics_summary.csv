@@ -1,0 +1,3 @@
+Grupo,Modelo_Asignado,Solicitudes_Totales,Creditos_Aprobados,Tasa_Aprobacion,Defaults_en_Cartera,Tasa_Mora_Cartera,Defaults_Evitados,Utilidad_Financiera
+A_Control,Regresión Logística (t=0.50),3043,2731.0,0.8974696023660861,239,0.08751373123398022,211,1945500.0
+B_Treatment,Gradient Boosting (t=0.29),2957,2483.0,0.8397024010821779,131,0.052758759565042286,294,2545500.0

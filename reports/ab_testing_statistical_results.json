@@ -1,0 +1,18 @@
+{
+    "group_A_defaults": 239,
+    "group_A_approved": 2731,
+    "group_A_default_rate": 0.08751373123398022,
+    "group_B_defaults": 131,
+    "group_B_approved": 2483,
+    "group_B_default_rate": 0.052758759565042286,
+    "diff_default_rate": 0.034754971668937935,
+    "relative_reduction_pct": 39.713735409150416,
+    "ci_95_lower": 0.020983658756543393,
+    "ci_95_upper": 0.04852628458133248,
+    "z_statistic": 4.881448736236992,
+    "p_value_one_sided": 5.265465042581252e-07,
+    "p_value_two_sided": 1.0530930085162505e-06,
+    "utility_A": 1945500.0,
+    "utility_B": 2545500.0,
+    "profit_delta": 600000.0
+}

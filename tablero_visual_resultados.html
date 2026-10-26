@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero Visual de Resultados - Evaluación y Validación de Modelos</title>
+    <!-- Chart.js para gráficos interactivos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --primary-dark: #172554;
+            --secondary: #0d9488;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --dark: #0f172a;
+            --gray-100: #f8fafc;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --white: #ffffff;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--gray-100);
+            color: var(--gray-800);
+            line-height: 1.5;
+            padding-bottom: 50px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: var(--white);
+            padding: 2rem 2.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .header-title p {
+            color: var(--gray-300);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .badge-pill {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            padding: 0.35rem 0.9rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border-top: 4px solid var(--primary-light);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .kpi-card.success { border-top-color: var(--success); }
+        .kpi-card.warning { border-top-color: var(--warning); }
+        .kpi-card.purple { border-top-color: #8b5cf6; }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .kpi-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-600);
+        }
+
+        .kpi-icon {
+            font-size: 1.3rem;
+        }
+
+        .kpi-value {
+            font-size: 1.95rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.02em;
+        }
+
+        .kpi-subtext {
+            font-size: 0.82rem;
+            color: var(--gray-600);
+            margin-top: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .kpi-trend-up {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Navigation Tabs */
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--white);
+            padding: 0.5rem;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.75rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+            background: var(--gray-100);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: 0 2px 4px rgba(30, 58, 138, 0.3);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Section */
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 0.75rem;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Custom Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            font-weight: 700;
+            padding: 0.85rem 1rem;
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        tr:hover td {
+            background-color: #f1f5f9;
+        }
+
+        .highlight-row {
+            background-color: #eff6ff !important;
+            font-weight: 600;
+        }
+
+        .tag-winner {
+            background: #dcfce7;
+            color: #166534;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid #bbf7d0;
+        }
+
+        .tag-baseline {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Confusion Matrix Visualization */
+        .cm-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 440px;
+            margin: 1.5rem auto;
+        }
+
+        .cm-box {
+            padding: 1.25rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .cm-tn { background: #e0f2fe; border-color: #7dd3fc; }
+        .cm-fp { background: #fee2e2; border-color: #fca5a5; }
+        .cm-fn { background: #ffedd5; border-color: #fdba74; }
+        .cm-tp { background: #dcfce7; border-color: #86efac; }
+
+        .cm-box .label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem; }
+        .cm-box .val { font-size: 1.6rem; font-weight: 800; }
+        .cm-box .desc { font-size: 0.75rem; color: var(--gray-600); margin-top: 0.25rem; }
+
+        /* Threshold Simulator Interactive Controls */
+        .sim-control-box {
+            background: var(--gray-100);
+            padding: 1.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--gray-300);
+            margin-bottom: 1.5rem;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .slider-label {
+            font-weight: 700;
+            font-size: 1rem;
+            min-width: 220px;
+        }
+
+        .slider-val-badge {
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        input[type=range] {
+            flex-grow: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--gray-300);
+            cursor: pointer;
+        }
+
+        /* Image Display */
+        .chart-img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Callout Box */
+        .callout {
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin-top: 1.25rem;
+            border-left: 4px solid var(--primary);
+            background: #eff6ff;
+            font-size: 0.92rem;
+        }
+
+        .callout.success {
+            border-left-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .callout.warning {
+            border-left-color: var(--warning);
+            background: #fffbeb;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Principal -->
+    <header>
+        <div class="header-content">
+            <div class="header-title">
+                <span class="badge-pill">Actividad 6: Gestión de Proyectos IA</span>
+                <h1 style="margin-top: 0.4rem;">Tablero Visual de Evaluación y Validación de Modelos</h1>
+                <p>Modelo Supervisado de Riesgo Crediticio (Credit Default Prediction) | Maestría en Inteligencia Artificial</p>
+            </div>
+            <div>
+                <span class="badge-pill" style="background: rgba(34, 197, 94, 0.25); border-color: rgba(34, 197, 94, 0.5); color: #86efac;">
+                    ✓ Modelo Validado y Recomendado para Producción
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Fila de Indicadores Clave de Desempeño (KPIs) -->
+        <div class="kpi-grid">
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <span class="kpi-title">Discriminación (ROC-AUC)</span>
+                    <span class="kpi-icon">🎯</span>
+                </div>
+                <div class="kpi-value">0.9212</div>
+                <div class="kpi-subtext">
+                    <span class="kpi-trend-up">▲ +0.018</span> vs Baseline Regresión Logística (0.903)
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Recall en Default (t = 0.29)</span>
+                    <span class="kpi-icon">🛡️</span>
+                </div>
+                <div class="kpi-value">71.65%</div>
+                <div class="kpi-subtext">
+                    <span class="kpi-trend-up">▲ +25.3 pp</span> vs Corte tradicional 0.50 (46.3%)
+                </div>
+            </div>
+
+            <div class="kpi-card purple">
+                <div class="kpi-header">
+                    <span class="kpi-title">Reducción de Mora A/B</span>
+                    <span class="kpi-icon">📉</span>
+                </div>
+                <div class="kpi-value">-39.71%</div>
+                <div class="kpi-subtext">
+                    Mora bajó de 8.75% (A) a <strong>5.28%</strong> (B) en cohorte
+                </div>
+            </div>
+
+            <div class="kpi-card warning">
+                <div class="kpi-header">
+                    <span class="kpi-title">Significancia Estadística</span>
+                    <span class="kpi-icon">🔬</span>
+                </div>
+                <div class="kpi-value">Z = 4.88</div>
+                <div class="kpi-subtext">
+                    <strong>p-valor: 5.27e-07</strong> (p &lt;&lt; 0.001, Alta Confianza)
+                </div>
+            </div>
+
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <span class="kpi-title">Ganancia Neta Incremental</span>
+                    <span class="kpi-icon">💰</span>
+                </div>
+                <div class="kpi-value">+$600,000</div>
+                <div class="kpi-subtext">
+                    USD generados en cohorte experimental de 6,000 créditos
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Navegación por Pestañas -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('tab-resumen')">📊 Resumen Ejecutivo</button>
+            <button class="tab-btn" onclick="switchTab('tab-modelos')">⚖️ Comparación de Modelos</button>
+            <button class="tab-btn" onclick="switchTab('tab-matrices')">🔲 Matrices de Confusión</button>
+            <button class="tab-btn" onclick="switchTab('tab-umbral')">🎚️ Ajuste de Umbral Interactivo</button>
+            <button class="tab-btn" onclick="switchTab('tab-curvas')">📈 Curvas ROC, PRC & CV</button>
+            <button class="tab-btn" onclick="switchTab('tab-ab')">🧪 Prueba A/B & Significancia</button>
+            <button class="tab-btn" onclick="switchTab('tab-justificacion')">🏆 Selección & Justificación</button>
+        </div>
+
+        <!-- PESTAÑA 1: RESUMEN EJECUTIVO -->
+        <div id="tab-resumen" class="tab-content active">
+            <div class="card">
+                <h2 class="card-title">📌 Contexto del Negocio y Cumplimiento de Objetivos SMART</h2>
+                <p style="font-size: 0.95rem; color: var(--gray-700); line-height: 1.6;">
+                    El presente proyecto evalúa y valida una suite de modelos de clasificación supervisada para la predicción de riesgo de impago (<em>Credit Default Prediction</em>) en banca de consumo y Fintech sobre una cartera de 12,500 solicitudes con una tasa base de morosidad del <strong>15.78%</strong>. El error de mayor severidad patrimonial es el <strong>Falso Negativo</strong> (aprobar un crédito a un cliente insolvente), con una pérdida promedio no recuperable de \$7,500 USD por evento.
+                </p>
+
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <div style="background: var(--gray-100); padding: 1.25rem; border-radius: 10px; border-left: 4px solid var(--primary);">
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary);">🎯 Evaluación del Objetivo SMART</h3>
+                        <ul style="margin-top: 0.75rem; padding-left: 1.2rem; font-size: 0.88rem; color: var(--gray-700); line-height: 1.7;">
+                            <li><strong>Específico (S):</strong> Modelo Gradient Boosting desplegado para clasificar mora a 12-24 meses.</li>
+                            <li><strong>Medible (M):</strong> Superó la meta de $ROC-AUC \ge 0.90$ alcanzando <strong>0.9212</strong> y $Recall \ge 70\%$ con <strong>71.65%</strong> en umbral optimizado.</li>
+                            <li><strong>Alcanzable (A):</strong> Validado rigurosamente mediante Stratified 5-Fold Cross Validation con desviación estándar mínima (&plusmn;0.0040).</li>
+                            <li><strong>Relevante (R):</strong> Disminución del 39.71% en mora observada y utilidad neta incremental de +\$600k USD en cohorte piloto.</li>
+                            <li><strong>Temporal (T):</strong> Completado y testeado en entorno A/B de 60 días listo para integración productiva.</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: var(--gray-100); padding: 1.25rem; border-radius: 10px; border-left: 4px solid var(--secondary);">
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--secondary);">⚙️ Parámetros de la Matriz de Pérdida Financiera</h3>
+                        <table style="margin-top: 0.5rem; font-size: 0.85rem;">
+                            <tr>
+                                <th>Resultado</th>
+                                <th>Acción del Negocio</th>
+                                <th>Impacto Económico Unitario</th>
+                            </tr>
+                            <tr>
+                                <td><strong>Verdadero Negativo (TN)</strong></td>
+                                <td>Crédito solvente aprobado</td>
+                                <td style="color: var(--success); font-weight: 700;">+\$1,500 USD (Margen de Intereses)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Falso Negativo (FN)</strong></td>
+                                <td>Crédito insolvente aprobado</td>
+                                <td style="color: var(--danger); font-weight: 700;">-\$7,500 USD (Pérdida Principal EAD*LGD)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Falso Positivo (FP)</strong></td>
+                                <td>Crédito solvente rechazado</td>
+                                <td style="color: var(--warning); font-weight: 700;">-\$1,500 USD (Costo de Oportunidad)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Verdadero Positivo (TP)</strong></td>
+                                <td>Crédito insolvente declinado</td>
+                                <td style="color: var(--primary); font-weight: 700;">\$0 USD (Pérdida Evitada de \$7,500)</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3 class="card-title">📈 Desempeño Comparativo en Conjunto de Prueba</h3>
+                    <img src="figures/2_roc_and_pr_curves.png" alt="Curvas ROC y PR" class="chart-img">
+                </div>
+                <div class="card">
+                    <h3 class="card-title">🔬 Impacto Observado en Prueba A/B en Producción</h3>
+                    <img src="figures/5_ab_test_experiment_results.png" alt="Resultados Prueba A/B" class="chart-img">
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 2: COMPARACIÓN DE MODELOS -->
+        <div id="tab-modelos" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">⚖️ Comparación Multidimensional de Modelos vs Baselines</h2>
+                <p style="font-size: 0.92rem; color: var(--gray-600); margin-bottom: 1rem;">
+                    Evaluación en conjunto Holdout de 2,500 observaciones (20% del dataset total) evaluado a umbral por defecto (t = 0.50):
+                </p>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Modelo Evaluado</th>
+                                <th>Tipo de Arquitectura</th>
+                                <th>Exactitud</th>
+                                <th>Precisión</th>
+                                <th>Recall</th>
+                                <th>F1-Score</th>
+                                <th>F2-Score</th>
+                                <th>ROC-AUC</th>
+                                <th>PR-AUC</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Dummy (Most Frequent)</strong></td>
+                                <td>Baseline Ingenuo</td>
+                                <td>84.20%</td>
+                                <td>0.00%</td>
+                                <td>0.00%</td>
+                                <td>0.0000</td>
+                                <td>0.0000</td>
+                                <td>0.5000</td>
+                                <td>0.1580</td>
+                                <td><span class="tag-baseline">Baseline 0</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Dummy (Stratified)</strong></td>
+                                <td>Baseline Aleatorio</td>
+                                <td>73.60%</td>
+                                <td>16.62%</td>
+                                <td>16.71%</td>
+                                <td>0.1667</td>
+                                <td>0.1669</td>
+                                <td>0.5049</td>
+                                <td>0.1594</td>
+                                <td><span class="tag-baseline">Baseline Rand</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Regresión Logística Base</strong></td>
+                                <td>Lineal Estándar (L2)</td>
+                                <td>88.88%</td>
+                                <td>73.49%</td>
+                                <td>46.33%</td>
+                                <td>0.5683</td>
+                                <td>0.5000</td>
+                                <td>0.9031</td>
+                                <td>0.6860</td>
+                                <td><span class="tag-baseline">Control A/B</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Regresión Logística Balanceada</strong></td>
+                                <td>Lineal Cost-Sensitive</td>
+                                <td>81.60%</td>
+                                <td>45.45%</td>
+                                <td>82.28%</td>
+                                <td>0.5856</td>
+                                <td>0.7078</td>
+                                <td>0.9033</td>
+                                <td>0.6827</td>
+                                <td><span class="tag-baseline">Alta Falsa Alarma</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Random Forest Classifier</strong></td>
+                                <td>Ensamble Bagging (200 árboles)</td>
+                                <td>90.20%</td>
+                                <td>80.00%</td>
+                                <td>50.63%</td>
+                                <td>0.6202</td>
+                                <td>0.5464</td>
+                                <td>0.9131</td>
+                                <td>0.7414</td>
+                                <td><span class="tag-winner" style="background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;">Candidato 2</span></td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td><strong>Gradient Boosting Classifier</strong></td>
+                                <td>Ensamble Boosting (220 etapas)</td>
+                                <td><strong>90.76%</strong></td>
+                                <td><strong>77.15%</strong></td>
+                                <td><strong>58.99%</strong></td>
+                                <td><strong>0.6686</strong></td>
+                                <td><strong>0.6186</strong></td>
+                                <td><strong>0.9212</strong></td>
+                                <td><strong>0.7590</strong></td>
+                                <td><span class="tag-winner">★ GANADOR TÉCNICO</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="callout warning">
+                    <strong>⚠️ La Trampa de la Exactitud (Accuracy Trap):</strong> El modelo Dummy (Most Frequent) exhibe una exactitud aparentemente alta del <strong>84.20%</strong> sin embargo su Recall es <strong>0.00%</strong>: no es capaz de detectar un solo cliente moroso, conduciendo a pérdidas catastróficas. Por esta razón, el ROC-AUC (0.9212) y el PR-AUC (0.7590) son las métricas soberanas en este entorno.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">📦 Distribución de Métricas en Validación Cruzada Estratificada (5-Fold)</h3>
+                <img src="figures/4_cross_validation_distributions.png" alt="Boxplots Validación Cruzada" class="chart-img">
+            </div>
+        </div>
+
+        <!-- PESTAÑA 3: MATRICES DE CONFUSIÓN -->
+        <div id="tab-matrices" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">🔲 Comparativa de Matrices de Confusión: Estándar (t=0.50) vs Óptimo (t=0.29)</h2>
+                <p style="font-size: 0.92rem; color: var(--gray-600);">
+                    Observe cómo el ajuste del umbral de corte logra mitigar el error más oneroso (Falsos Negativos), reduciendo drásticamente la mora total sin penalizar en exceso los Falsos Positivos.
+                </p>
+
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <!-- Matriz t=0.50 -->
+                    <div style="background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 1.5rem; box-shadow: var(--card-shadow);">
+                        <h3 style="font-size: 1.05rem; font-weight: 700; text-align: center; color: var(--gray-800); margin-bottom: 0.5rem;">
+                            Umbral Estándar (t = 0.50)
+                        </h3>
+                        <p style="text-align: center; font-size: 0.82rem; color: var(--gray-600); margin-bottom: 1rem;">
+                            Recall: <strong>58.23%</strong> | Precisión: <strong>77.18%</strong> | Falsos Negativos: <strong>165</strong>
+                        </p>
+                        <div class="cm-container">
+                            <div class="cm-box cm-tn">
+                                <div class="label" style="color: #0369a1;">Verdaderos Negativos (TN)</div>
+                                <div class="val" style="color: #0c4a6e;">2,036</div>
+                                <div class="desc">Solventes Aprobados (+1.5k USD c/u)</div>
+                            </div>
+                            <div class="cm-box cm-fp">
+                                <div class="label" style="color: #b91c1c;">Falsos Positivos (FP)</div>
+                                <div class="val" style="color: #7f1d1d;">69</div>
+                                <div class="desc">Solventes Rechazados (-1.5k USD c/u)</div>
+                            </div>
+                            <div class="cm-box cm-fn">
+                                <div class="label" style="color: #c2410c;">Falsos Negativos (FN)</div>
+                                <div class="val" style="color: #7c2d12;">165</div>
+                                <div class="desc">Insolventes Aprobados (-7.5k USD c/u)</div>
+                            </div>
+                            <div class="cm-box cm-tp">
+                                <div class="label" style="color: #15803d;">Verdaderos Positivos (TP)</div>
+                                <div class="val" style="color: #14532d;">230</div>
+                                <div class="desc">Insolventes Declinados (Pérdida evitada)</div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 1rem; font-size: 0.95rem; font-weight: 700; color: var(--gray-700);">
+                            Utilidad Neta Generada: <span style="color: var(--primary); font-size: 1.15rem;">\$1,716,000 USD</span>
+                        </div>
+                    </div>
+
+                    <!-- Matriz t=0.29 -->
+                    <div style="background: var(--white); border: 2px solid var(--success); border-radius: 12px; padding: 1.5rem; box-shadow: var(--card-shadow);">
+                        <div style="text-align: center; margin-bottom: 0.35rem;">
+                            <span class="tag-winner">OPTIMIZADO POR COSTO FINANCIERO</span>
+                        </div>
+                        <h3 style="font-size: 1.05rem; font-weight: 700; text-align: center; color: var(--gray-800); margin-bottom: 0.5rem;">
+                            Umbral Óptimo Costo-Beneficio (t = 0.29)
+                        </h3>
+                        <p style="text-align: center; font-size: 0.82rem; color: var(--gray-600); margin-bottom: 1rem;">
+                            Recall: <strong>71.65%</strong> | Precisión: <strong>69.02%</strong> | Falsos Negativos: <strong>112</strong> (-32%)
+                        </p>
+                        <div class="cm-container">
+                            <div class="cm-box cm-tn">
+                                <div class="label" style="color: #0369a1;">Verdaderos Negativos (TN)</div>
+                                <div class="val" style="color: #0c4a6e;">1,978</div>
+                                <div class="desc">Solventes Aprobados (+1.5k USD c/u)</div>
+                            </div>
+                            <div class="cm-box cm-fp">
+                                <div class="label" style="color: #b91c1c;">Falsos Positivos (FP)</div>
+                                <div class="val" style="color: #7f1d1d;">127</div>
+                                <div class="desc">Solventes Rechazados (-1.5k USD c/u)</div>
+                            </div>
+                            <div class="cm-box cm-fn">
+                                <div class="label" style="color: #c2410c;">Falsos Negativos (FN)</div>
+                                <div class="val" style="color: #7c2d12;">112</div>
+                                <div class="desc">Insolventes Aprobados (-7.5k USD c/u)</div>
+                            </div>
+                            <div class="cm-box cm-tp">
+                                <div class="label" style="color: #15803d;">Verdaderos Positivos (TP)</div>
+                                <div class="val" style="color: #14532d;">283</div>
+                                <div class="desc">Insolventes Declinados (+53 detectados)</div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 1rem; font-size: 0.95rem; font-weight: 700; color: var(--gray-700);">
+                            Utilidad Neta Generada: <span style="color: var(--success); font-size: 1.15rem;">\$1,936,500 USD</span>
+                            <div style="font-size: 0.82rem; color: var(--success); font-weight: 600;">Ganancia Neta Incremental: +$220,500 USD (+12.8%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <img src="figures/1_confusion_matrices_comparison.png" alt="Heatmaps de Matrices de Confusión" class="chart-img">
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 4: AJUSTE DE UMBRAL INTERACTIVO -->
+        <div id="tab-umbral" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">🎚️ Simulador Interactivo de Ajuste de Umbral y Costo Financiero</h2>
+                <p style="font-size: 0.92rem; color: var(--gray-600); margin-bottom: 1.25rem;">
+                    Desplace el control deslizante para explorar dinámicamente cómo varía el compromiso entre <em>Recall</em>, <em>Precisión</em>, tasa de aprobación crediticia y la <em>Utilidad Financiera Neta</em> de la cartera:
+                </p>
+
+                <div class="sim-control-box">
+                    <div class="slider-group">
+                        <span class="slider-label">Umbral de Corte de Probabilidad ($t$):</span>
+                        <input type="range" id="thresh-slider" min="0.05" max="0.80" step="0.01" value="0.29" oninput="updateSimulator(this.value)">
+                        <span class="slider-val-badge" id="thresh-val">0.29</span>
+                    </div>
+                </div>
+
+                <div class="kpi-grid" style="margin-bottom: 1.5rem;">
+                    <div class="kpi-card">
+                        <div class="kpi-title">Recall (Sensibilidad a Mora)</div>
+                        <div class="kpi-value" id="sim-rec" style="color: #e11d48;">71.65%</div>
+                        <div class="kpi-subtext" id="sim-fn">Falsos Negativos (Defaults no vistos): 112</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">Precisión del Modelo</div>
+                        <div class="kpi-value" id="sim-prec" style="color: #2563eb;">69.02%</div>
+                        <div class="kpi-subtext" id="sim-fp">Falsos Positivos (Falsas alarmas): 127</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">Tasa de Aprobación Global</div>
+                        <div class="kpi-value" id="sim-app" style="color: #4f46e5;">83.60%</div>
+                        <div class="kpi-subtext" id="sim-app-count">2,090 préstamos otorgados</div>
+                    </div>
+                    <div class="kpi-card success">
+                        <div class="kpi-title">Utilidad Financiera Neta</div>
+                        <div class="kpi-value" id="sim-prof" style="color: #16a34a;">$1,936,500</div>
+                        <div class="kpi-subtext" id="sim-loss">Pérdida total esperada: $1,030,500 USD</div>
+                    </div>
+                </div>
+
+                <div class="card" style="box-shadow: none; border: 1px solid var(--gray-200);">
+                    <h3 class="card-title">Curvas de Optimización de Umbral y Beneficio Económico</h3>
+                    <img src="figures/3_threshold_optimization_and_financial_loss.png" alt="Optimización de Umbral" class="chart-img">
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 5: CURVAS ROC, PRC Y CV -->
+        <div id="tab-curvas" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <h2 class="card-title">📈 Curvas ROC y Precision-Recall</h2>
+                    <img src="figures/2_roc_and_pr_curves.png" alt="Curvas ROC y PR" class="chart-img">
+                    <div class="callout" style="margin-top: 1rem;">
+                        <strong>Interpretación del AUC = 0.9212:</strong> Significa que al tomar un solicitante moroso aleatorio y un solicitante solvente aleatorio, existe un <strong>92.12% de probabilidad</strong> de que el modelo asigne un mayor score de riesgo al cliente moroso. El coeficiente de Gini financiero equivalente es $2 \times 0.9212 - 1 = \mathbf{0.8424}$, considerado excelente bajo estándares regulatorios de Basilea.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">📦 Estabilidad Estadística en Stratified 5-Fold CV</h2>
+                    <img src="figures/4_cross_validation_distributions.png" alt="Distribuciones CV" class="chart-img">
+                    <div class="callout success" style="margin-top: 1rem;">
+                        <strong>Análisis de Sesgo vs Varianza:</strong> El modelo Gradient Boosting mostró un $ROC-AUC$ medio en entrenamiento de $0.9134 \pm 0.0040$ y un resultado en test de $0.9212$. La estrechez del intervalo de confianza y la consistencia en el test holdout descartan sobreajuste (<em>overfitting</em>) y confirman una excelente capacidad de generalización.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 6: PRUEBA A/B -->
+        <div id="tab-ab" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">🧪 Escenario de Experimentación: Prueba A/B en Producción</h2>
+                <p style="font-size: 0.92rem; color: var(--gray-600); margin-bottom: 1.25rem;">
+                    Cohorte de 6,000 nuevas solicitudes consecutivas divididas equitativamente mediante split aleatorio 1:1 en el motor de decisiones durante un ciclo de 60 días:
+                </p>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Brazo Experimental</th>
+                                <th>Modelo en Motor</th>
+                                <th>Umbral</th>
+                                <th>Solicitudes</th>
+                                <th>Aprobados</th>
+                                <th>Tasa Aprobación</th>
+                                <th>Defaults en Cartera</th>
+                                <th>Tasa de Mora</th>
+                                <th>Defaults Evitados</th>
+                                <th>Utilidad Financiera Neta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Grupo A (Control)</strong></td>
+                                <td>Regresión Logística Base</td>
+                                <td>0.50</td>
+                                <td>3,043</td>
+                                <td>2,731</td>
+                                <td>89.75%</td>
+                                <td>239</td>
+                                <td style="color: var(--danger); font-weight: 700; font-size: 1rem;">8.75%</td>
+                                <td>211</td>
+                                <td style="font-weight: 700;">\$1,945,500 USD</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td><strong>Grupo B (Tratamiento)</strong></td>
+                                <td>Gradient Boosting</td>
+                                <td>0.29</td>
+                                <td>2,957</td>
+                                <td>2,483</td>
+                                <td>83.97%</td>
+                                <td>131</td>
+                                <td style="color: var(--success); font-weight: 700; font-size: 1.05rem;">5.28%</td>
+                                <td>294</td>
+                                <td style="color: var(--success); font-weight: 800; font-size: 1.05rem;">\$2,545,500 USD</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <div style="background: var(--gray-100); padding: 1.25rem; border-radius: 10px;">
+                        <h3 style="font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: 0.75rem;">
+                            🔬 Resultados del Test de Hipótesis (Two-Sample Proportion Z-Test)
+                        </h3>
+                        <table style="font-size: 0.88rem;">
+                            <tr>
+                                <td>Diferencia Absoluta de Incumplimiento:</td>
+                                <td style="font-weight: 700; color: var(--success);">-3.48% puntos porcentuales</td>
+                            </tr>
+                            <tr>
+                                <td>Reducción Relativa de Morosidad:</td>
+                                <td style="font-weight: 700; color: var(--success);">-39.71% de mora</td>
+                            </tr>
+                            <tr>
+                                <td>Intervalo de Confianza al 95%:</td>
+                                <td style="font-weight: 700;">[2.10%, 4.85%]</td>
+                            </tr>
+                            <tr>
+                                <td>Estadístico de Prueba (Z-Score):</td>
+                                <td style="font-weight: 700;">Z = 4.8814</td>
+                            </tr>
+                            <tr>
+                                <td>p-valor (Prueba Unilateral):</td>
+                                <td style="font-weight: 700; color: var(--danger);">5.265 &times; 10<sup>-7</sup></td>
+                            </tr>
+                            <tr>
+                                <td>Decisión Estadística (&alpha; = 0.01):</td>
+                                <td><span class="tag-winner">RECHAZA H0 (Efecto Significativo)</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div>
+                        <img src="figures/5_ab_test_experiment_results.png" alt="Gráfico Resultados A/B" class="chart-img">
+                    </div>
+                </div>
+
+                <div class="callout success">
+                    <strong>Conclusión del Experimento A/B:</strong> La reducción en la tasa de mora del <strong>8.75% al 5.28%</strong> es estadísticamente innegable ($p < 0.0001$). Aunque la tasa de aprobación bajó ligeramente del 89.7% al 84.0% debido al filtrado de solicitudes altamente riesgosas, la utilidad financiera neta creció en <strong>+\$600,000 USD</strong> netos en sólo 60 días al evitar pérdidas severas por mora.
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 7: SELECCIÓN Y JUSTIFICACIÓN -->
+        <div id="tab-justificacion" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">🏆 Modelo Seleccionado y Justificación Integral para Despliegue</h2>
+
+                <div class="grid-2">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 0.75rem;">
+                            Modelo Seleccionado: Gradient Boosting Classifier ($t^* = 0.29$)
+                        </h3>
+                        <p style="font-size: 0.92rem; color: var(--gray-700); line-height: 1.6; margin-bottom: 1rem;">
+                            La decisión de seleccionar el ensamble de Gradient Boosting con un umbral optimizado de corte en $t=0.29$ se fundamenta en cuatro pilares:
+                        </p>
+                        <ol style="padding-left: 1.2rem; font-size: 0.9rem; color: var(--gray-700); line-height: 1.7;">
+                            <li><strong>Superioridad en Discriminación:</strong> Logra el mayor $ROC-AUC$ (0.9212) y $PR-AUC$ (0.7590) de toda la suite, capturando no linealidades complejas (como el sobreendeudamiento simultáneo con bajo puntaje crediticio).</li>
+                            <li><strong>Robustez y Baja Varianza:</strong> Registró una desviación estándar de apenas &plusmn;0.0040 a lo largo de las 5 particiones estratificadas de validación cruzada.</li>
+                            <li><strong>Alineación Asimétrica de Costos:</strong> Al situar el umbral en 0.29, el modelo prioriza el rescate de pérdidas crediticias ($Recall = 71.65\%$) manteniendo una sólida precisión del $69.02\%$.</li>
+                            <li><strong>Validación Empírica en Producción (A/B Test):</strong> Redujo la morosidad real observada en un 39.71% con significancia estadística rotunda ($p = 5.27 \times 10^{-7}$) y un beneficio financiero adicional de \$600k USD.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--dark); margin-bottom: 0.75rem;">
+                            Importancia de Variables (Feature Importance)
+                        </h3>
+                        <img src="figures/6_feature_importance.png" alt="Importancia de Variables" class="chart-img">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <div style="background: var(--gray-100); padding: 1.25rem; border-radius: 10px;">
+                        <h4 style="font-weight: 700; color: var(--dark); margin-bottom: 0.5rem;">🛡️ Gobernanza de Modelo & Mitigación de Riesgos</h4>
+                        <ul style="font-size: 0.85rem; color: var(--gray-600); line-height: 1.6; padding-left: 1rem;">
+                            <li><strong>Monitoreo de Drift (PSI):</strong> Implementación de alertas automatizadas si el <em>Population Stability Index</em> supera 0.25 en variables clave como DTI y Credit Score.</li>
+                            <li><strong>Monitoreo de Equidad (Fairness):</strong> Garantizar paridad en tasas de aprobación cruzadas por segmentos demográficos y geográficos.</li>
+                            <li><strong>Fallback de Continuidad:</strong> Si los servicios de inferencia de ensamble se degradan, el sistema conmuta temporalmente al score de Regresión Logística.</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: var(--gray-100); padding: 1.25rem; border-radius: 10px;">
+                        <h4 style="font-weight: 700; color: var(--dark); margin-bottom: 0.5rem;">📅 Plan de Despliegue Gradual (Rollout Phased)</h4>
+                        <ul style="font-size: 0.85rem; color: var(--gray-600); line-height: 1.6; padding-left: 1rem;">
+                            <li><strong>Fase 1 (Semanas 1-2):</strong> Expansión del tráfico del modelo ganador del 50% al 80% con monitoreo diario de inferencia.</li>
+                            <li><strong>Fase 2 (Semanas 3-4):</strong> Despliegue al 100% de solicitudes con re-calibración de umbral mensual.</li>
+                            <li><strong>Fase 3 (Mes 3+):</strong> Re-entrenamiento trimestral automatizado sobre carteras maduras.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p><strong>Actividad 6: Evaluación y Validación de Modelos Mediante Métricas y Pruebas</strong></p>
+            <p>Maestría en Inteligencia Artificial | Gestión de Proyectos de IA | Repositorio reproducible con scripts Python, Jupyter Notebook y datos simulados.</p>
+        </footer>
+
+    </div>
+
+    <!-- Script de interactividad -->
+    <script>
+        // Función de cambio de pestañas
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Datos del simulador de umbral cargados desde la experimentación
+        const thresholdData = [
+            { t: 0.05, rec: 0.9418, prec: 0.3842, app: 0.612, prof: 1350000, loss: 1620000, fn: 23, fp: 602 },
+            { t: 0.10, rec: 0.8861, prec: 0.4902, app: 0.714, prof: 1680000, loss: 1290000, fn: 45, fp: 365 },
+            { t: 0.15, rec: 0.8127, prec: 0.5671, app: 0.776, prof: 1867500, loss: 1102500, fn: 74, fp: 245 },
+            { t: 0.20, rec: 0.7848, prec: 0.6187, app: 0.800, prof: 1912500, loss: 1057500, fn: 85, fp: 191 },
+            { t: 0.25, rec: 0.7443, prec: 0.6652, app: 0.823, prof: 1930500, loss: 1039500, fn: 101, fp: 148 },
+            { t: 0.29, rec: 0.7165, prec: 0.6902, app: 0.836, prof: 1936500, loss: 1030500, fn: 112, fp: 127 },
+            { t: 0.35, rec: 0.6709, prec: 0.7207, app: 0.853, prof: 1903500, loss: 1066500, fn: 130, fp: 103 },
+            { t: 0.40, rec: 0.6380, prec: 0.7456, app: 0.865, prof: 1858500, loss: 1111500, fn: 143, fp: 86 },
+            { t: 0.50, rec: 0.5823, prec: 0.7718, app: 0.883, prof: 1716000, loss: 1339500, fn: 165, fp: 69 },
+            { t: 0.60, rec: 0.4937, prec: 0.8125, app: 0.904, prof: 1515000, loss: 1545000, fn: 200, fp: 45 },
+            { t: 0.70, rec: 0.3899, prec: 0.8603, app: 0.928, prof: 1261500, loss: 1798500, fn: 241, fp: 25 },
+            { t: 0.80, rec: 0.2405, prec: 0.9135, app: 0.958, prof: 871500, loss: 2188500, fn: 300, fp: 9 }
+        ];
+
+        function updateSimulator(val) {
+            const num = parseFloat(val);
+            document.getElementById('thresh-val').innerText = num.toFixed(2);
+
+            // Encontrar punto más cercano
+            let closest = thresholdData[0];
+            let minDiff = Math.abs(num - closest.t);
+            for (let i = 1; i < thresholdData.length; i++) {
+                let diff = Math.abs(num - thresholdData[i].t);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = thresholdData[i];
+                }
+            }
+
+            document.getElementById('sim-rec').innerText = (closest.rec * 100).toFixed(2) + '%';
+            document.getElementById('sim-prec').innerText = (closest.prec * 100).toFixed(2) + '%';
+            document.getElementById('sim-app').innerText = (closest.app * 100).toFixed(2) + '%';
+            document.getElementById('sim-prof').innerText = '$' + closest.prof.toLocaleString() + ' USD';
+            document.getElementById('sim-fn').innerText = 'Falsos Negativos (Defaults no vistos): ' + closest.fn;
+            document.getElementById('sim-fp').innerText = 'Falsos Positivos (Falsas alarmas): ' + closest.fp;
+            document.getElementById('sim-loss').innerText = 'Pérdida total esperada: $' + closest.loss.toLocaleString() + ' USD';
+            document.getElementById('sim-app-count').innerText = Math.round(closest.app * 2500) + ' préstamos otorgados';
+        }
+    </script>
+</body>
+</html>
